@@ -1,1 +1,26 @@
-
+# argocd-apps/wireguard-app.yaml
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: wireguard
+  namespace: argocd
+  labels:
+    app: wireguard
+spec:
+  project: infra
+  source:
+    repoURL: https://github.com/rafael-clair-violin/k8s-homelab-manifests.git
+    targetRevision: main
+    path: applications/wireguard
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: wireguard
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+    - CreateNamespace=true
+    - PrunePropagationPolicy=foreground
+    - PruneLast=true
+  revisionHistoryLimit: 10
