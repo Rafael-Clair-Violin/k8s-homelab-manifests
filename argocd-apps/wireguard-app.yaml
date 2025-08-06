@@ -1,26 +1,166 @@
-# argocd-apps/wireguard-app.yaml
-apiVersion: argoproj.io/v1alpha1
-kind: Application
+# applications/wireguard/namespace.yaml
+apiVersion: v1
+kind: Namespace
 metadata:
   name: wireguard
-  namespace: argocd
+  labels:
+    name: wireguard
+---
+# applications/wireguard/pvc.yaml
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: wireguard-pv
+  namespace: wireguard
+spec:
+  capacity:
+    storage: 1Gi
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: local-storage
+  local:
+    path: /opt/k8s-storage/wireguard
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+      - matchExpressions:
+        - key: kubernetes.io/hostname
+          operator: In
+          values:
+          - k8s-ctrl
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: wireguard-pvc
+  namespace: wireguard
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+  storageClassName: local-storage
+---
+# applications/wireguard/configmap.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: wireguard-config
+  namespace: wireguard
+data:
+  SERVERURL: "auto"
+  SERVERPORT: "51820"
+  PEERS: "10"
+  PEERDNS: "auto"
+  INTERNAL_SUBNET: "10.13.13.0"
+  ALLOWEDIPS: "0.0.0.0/0"
+  LOG_CONFS: "true"
+---
+# applications/wireguard/deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: wireguard
+  namespace: wireguard
   labels:
     app: wireguard
 spec:
-  project: infra
-  source:
-    repoURL: https://github.com/rafael-clair-violin/k8s-homelab-manifests.git
-    targetRevision: main
-    path: applications/wireguard
-  destination:
-    server: https://kubernetes.default.svc
-    namespace: wireguard
-  syncPolicy:
-    automated:
-      prune: true
-      selfHeal: true
-    syncOptions:
-    - CreateNamespace=true
-    - PrunePropagationPolicy=foreground
-    - PruneLast=true
-  revisionHistoryLimit: 10
+  replicas: 1
+  selector:
+    matchLabels:
+      app: wireguard
+  template:
+    metadata:
+      labels:
+        app: wireguard
+    spec:
+      containers:
+      - name: wireguard
+        image: lscr.io/linuxserver/wireguard:latest
+        ports:
+        - containerPort: 51820
+          protocol: UDP
+        env:
+        - name: PUID
+          value: "1000"
+        - name: PGID
+          value: "1000"
+        - name: TZ
+          value: "America/Sao_Paulo"
+        - name: SERVERURL
+          valueFrom:
+            configMapKeyRef:
+              name: wireguard-config
+              key: SERVERURL
+        - name: SERVERPORT
+          valueFrom:
+            configMapKeyRef:
+              name: wireguard-config
+              key: SERVERPORT
+        - name: PEERS
+          valueFrom:
+            configMapKeyRef:
+              name: wireguard-config
+              key: PEERS
+        - name: PEERDNS
+          valueFrom:
+            configMapKeyRef:
+              name: wireguard-config
+              key: PEERDNS
+        - name: INTERNAL_SUBNET
+          valueFrom:
+            configMapKeyRef:
+              name: wireguard-config
+              key: INTERNAL_SUBNET
+        - name: ALLOWEDIPS
+          valueFrom:
+            configMapKeyRef:
+              name: wireguard-config
+              key: ALLOWEDIPS
+        - name: LOG_CONFS
+          valueFrom:
+            configMapKeyRef:
+              name: wireguard-config
+              key: LOG_CONFS
+        volumeMounts:
+        - name: wireguard-data
+          mountPath: /config
+        - name: lib-modules
+          mountPath: /lib/modules
+          readOnly: true
+        securityContext:
+          capabilities:
+            add:
+            - NET_ADMIN
+            - SYS_MODULE
+          privileged: true
+      volumes:
+      - name: wireguard-data
+        persistentVolumeClaim:
+          claimName: wireguard-pvc
+      - name: lib-modules
+        hostPath:
+          path: /lib/modules
+          type: Directory
+      nodeSelector:
+        kubernetes.io/hostname: k8s-ctrl
+---
+# applications/wireguard/service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: wireguard-service
+  namespace: wireguard
+  labels:
+    app: wireguard
+spec:
+  type: NodePort
+  ports:
+  - port: 51820
+    targetPort: 51820
+    protocol: UDP
+    nodePort: 31820
+  selector:
+    app: wireguard
