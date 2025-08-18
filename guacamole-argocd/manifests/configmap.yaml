@@ -1,0 +1,24 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: guacamole-init-db
+  namespace: guacamole
+data:
+  001-create-schema.sql: |
+    -- Guacamole database schema
+    -- Este conteúdo deve ser obtido executando:
+    -- docker run --rm guacamole/guacamole:1.5.4 /opt/guacamole/bin/initdb.sh --postgresql
+    
+    CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+    
+    -- Tabelas principais do Guacamole
+    CREATE TABLE guacamole_entity (
+        entity_id     SERIAL       NOT NULL,
+        name          VARCHAR(128) NOT NULL,
+        type          VARCHAR(16)  NOT NULL,
+        PRIMARY KEY (entity_id),
+        UNIQUE (type, name)
+    );
+    
+    -- Adicione aqui o resto do schema completo do Guacamole
+    -- Por brevidade, estou mostrando apenas o início

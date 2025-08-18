@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: guacamole-config-pvc
+  namespace: guacamole
+  labels:
+    app: guacamole
+    component: frontend
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: local-path  # Ajuste conforme seu StorageClass
+  resources:
+    requests:
+      storage: 1Gi

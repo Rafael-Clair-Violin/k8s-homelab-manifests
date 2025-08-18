@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: postgresql-pvc
+  namespace: guacamole
+  labels:
+    app: postgresql
+    component: database
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: local-path  # Ajuste conforme seu StorageClass
+  resources:
+    requests:
+      storage: 10Gi
