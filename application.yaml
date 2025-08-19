@@ -9,9 +9,9 @@ metadata:
   finalizers:
     - resources-finalizer.argocd.argoproj.io
 spec:
-  project: default
+  project: infra
   source:
-    repoURL: https://github.com/SEU-USUARIO/guacamole-k8s  # ALTERE AQUI
+    repoURL: https://github.com/Rafael-Clair-Violin/k8s-homelab-manifests.git  # ALTERE AQUI
     targetRevision: HEAD
     path: manifests
     # Opcional: usar Kustomize
