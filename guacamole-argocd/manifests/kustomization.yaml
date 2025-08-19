@@ -1,11 +1,6 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
-metadata:
-  name: guacamole
-  annotations:
-    config.kubernetes.io/local-config: "true"
-
 # Namespace para todos os recursos
 namespace: guacamole
 
@@ -21,7 +16,6 @@ commonLabels:
 commonAnnotations:
   config.kubernetes.io/origin: |
     path: manifests/kustomization.yaml
-  argocd.argoproj.io/sync-wave: "0"
 
 # Recursos base
 resources:
@@ -29,16 +23,16 @@ resources:
   - namespace.yaml
   - secrets.yaml
   - configmaps.yaml
-  
+
   # PostgreSQL
   - postgresql/pvc.yaml
   - postgresql/deployment.yaml
   - postgresql/service.yaml
-  
+
   # Guacd (daemon)
   - guacd/deployment.yaml
   - guacd/service.yaml
-  
+
   # Guacamole (frontend)
   - guacamole/pvc.yaml
   - guacamole/deployment.yaml
@@ -47,7 +41,7 @@ resources:
 
 # Patches para personalização
 patches:
-  # Ajustar recursos baseado no ambiente
+  # PostgreSQL - recursos de memória
   - target:
       kind: Deployment
       name: postgresql
@@ -58,23 +52,56 @@ patches:
       - op: replace
         path: /spec/template/spec/containers/0/resources/limits/memory
         value: "1Gi"
-  
-  # Configurar replicas baseado no ambiente
+
+  # Guacamole - definir replicas
   - target:
       kind: Deployment
       name: guacamole
     patch: |-
       - op: replace
         path: /spec/replicas
-        value: 2
-  
+        value: 1
+
+  # Guacd - definir replicas
   - target:
       kind: Deployment
       name: guacd
     patch: |-
       - op: replace
         path: /spec/replicas
-        value: 2
+        value: 1
+
+  # Adicionar sync waves via patches (método correto)
+  - target:
+      kind: PersistentVolumeClaim
+    patch: |-
+      - op: add
+        path: /metadata/annotations/argocd.argoproj.io~1sync-wave
+        value: "1"
+
+  - target:
+      kind: Deployment
+      name: postgresql
+    patch: |-
+      - op: add
+        path: /metadata/annotations/argocd.argoproj.io~1sync-wave
+        value: "2"
+
+  - target:
+      kind: Deployment
+      name: guacd
+    patch: |-
+      - op: add
+        path: /metadata/annotations/argocd.argoproj.io~1sync-wave
+        value: "3"
+
+  - target:
+      kind: Deployment
+      name: guacamole
+    patch: |-
+      - op: add
+        path: /metadata/annotations/argocd.argoproj.io~1sync-wave
+        value: "4"
 
 # Imagens (para facilitar updates)
 images:
@@ -85,7 +112,7 @@ images:
   - name: guacamole/guacamole
     newTag: "1.5.4"
 
-# ConfigMap e Secret generators (opcional)
+# ConfigMap generator para variáveis de ambiente
 configMapGenerator:
   - name: guacamole-env-config
     literals:
@@ -94,53 +121,4 @@ configMapGenerator:
       - POSTGRES_HOSTNAME=postgresql
       - POSTGRES_PORT=5432
       - POSTGRES_DATABASE=guacamole_db
-
-# Transformações
-transformers:
-  # Adicionar sync waves para ordem de deploy
-  - |-
-    apiVersion: builtin
-    kind: AnnotationsTransformer
-    metadata:
-      name: sync-wave-transformer
-    annotations:
-      argocd.argoproj.io/sync-wave: "1"
-    targets:
-      - kind: PersistentVolumeClaim
-    fieldSpecs:
-      - path: metadata/annotations
-        create: true
-  
-  - |-
-    apiVersion: builtin
-    kind: AnnotationsTransformer
-    metadata:
-      name: sync-wave-db-transformer
-    annotations:
-      argocd.argoproj.io/sync-wave: "2"
-    targets:
-      - kind: Deployment
-        name: postgresql
-    fieldSpecs:
-      - path: metadata/annotations
-        create: true
-  
-  - |-
-    apiVersion: builtin
-    kind: AnnotationsTransformer
-    metadata:
-      name: sync-wave-app-transformer
-    annotations:
-      argocd.argoproj.io/sync-wave: "3"
-    targets:
-      - kind: Deployment
-        name: guacd
-      - kind: Deployment
-        name: guacamole
-    fieldSpecs:
-      - path: metadata/annotations
-        create: true
-
-# Validações
-openapi:
-  path: https://raw.githubusercontent.com/kubernetes/kubernetes/master/api/openapi-spec/swagger.json
+      
