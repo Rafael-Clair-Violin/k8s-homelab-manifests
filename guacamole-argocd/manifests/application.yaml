@@ -1,0 +1,45 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: guacamole
+  namespace: argocd
+  labels:
+    app.kubernetes.io/name: guacamole
+    app.kubernetes.io/instance: guacamole
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: infra
+  source:
+    repoURL: https://github.com/Rafael-Clair-Violin/k8s-homelab-manifests.git  # ALTERE AQUI
+    targetRevision: HEAD
+    path: manifests
+    # Opcional: usar Kustomize
+    # kustomize:
+    #   commonLabels:
+    #     app.kubernetes.io/managed-by: argocd
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: guacamole
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+      allowEmpty: false
+    syncOptions:
+      - CreateNamespace=true
+      - PrunePropagationPolicy=foreground
+      - PruneLast=true
+      - ApplyOutOfSyncOnly=true
+    retry:
+      limit: 5
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 3m
+  revisionHistoryLimit: 3
+  info:
+    - name: 'Description'
+      value: 'Apache Guacamole deployment with persistent storage'
+    - name: 'Documentation'
+      value: 'https://guacamole.apache.org/doc/gug/'
