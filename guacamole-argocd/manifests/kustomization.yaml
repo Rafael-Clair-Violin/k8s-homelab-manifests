@@ -5,12 +5,6 @@ kind: Kustomization
 namespace: guacamole
 
 # Labels comuns aplicados a todos os recursos
-commonLabels:
-  app.kubernetes.io/name: guacamole
-  app.kubernetes.io/instance: guacamole-prod
-  app.kubernetes.io/version: "1.5.4"
-  app.kubernetes.io/managed-by: argocd
-  app.kubernetes.io/part-of: guacamole-stack
 
 # Annotations comuns
 commonAnnotations:
@@ -18,107 +12,114 @@ commonAnnotations:
     path: manifests/kustomization.yaml
 
 # Recursos base
-resources:
   # Namespace e configurações base
-  - namespace.yaml
-  - secrets.yaml
-  - configmaps.yaml
 
   # PostgreSQL
-  - postgresql/pvc.yaml
-  - postgresql/deployment.yaml
-  - postgresql/service.yaml
 
   # Guacd (daemon)
-  - guacd/deployment.yaml
-  - guacd/service.yaml
 
   # Guacamole (frontend)
-  - guacamole/pvc.yaml
-  - guacamole/deployment.yaml
-  - guacamole/service.yaml
-  - guacamole/ingress.yaml
+resources:
+- namespace.yaml
+- secrets.yaml
+- configmaps.yaml
+- postgresql/pvc.yaml
+- postgresql/deployment.yaml
+- postgresql/service.yaml
+- guacd/deployment.yaml
+- guacd/service.yaml
+- guacamole/pvc.yaml
+- guacamole/deployment.yaml
+- guacamole/service.yaml
+- guacamole/ingress.yaml
 
 # Patches para personalização
-patches:
   # PostgreSQL - recursos de memória
-  - target:
-      kind: Deployment
-      name: postgresql
-    patch: |-
-      - op: replace
-        path: /spec/template/spec/containers/0/resources/requests/memory
-        value: "512Mi"
-      - op: replace
-        path: /spec/template/spec/containers/0/resources/limits/memory
-        value: "1Gi"
 
   # Guacamole - definir replicas
-  - target:
-      kind: Deployment
-      name: guacamole
-    patch: |-
-      - op: replace
-        path: /spec/replicas
-        value: 1
 
   # Guacd - definir replicas
-  - target:
-      kind: Deployment
-      name: guacd
-    patch: |-
-      - op: replace
-        path: /spec/replicas
-        value: 1
 
   # Adicionar sync waves via patches (método correto)
-  - target:
-      kind: PersistentVolumeClaim
-    patch: |-
-      - op: add
-        path: /metadata/annotations/argocd.argoproj.io~1sync-wave
-        value: "1"
 
-  - target:
-      kind: Deployment
-      name: postgresql
-    patch: |-
-      - op: add
-        path: /metadata/annotations/argocd.argoproj.io~1sync-wave
-        value: "2"
 
-  - target:
-      kind: Deployment
-      name: guacd
-    patch: |-
-      - op: add
-        path: /metadata/annotations/argocd.argoproj.io~1sync-wave
-        value: "3"
 
-  - target:
-      kind: Deployment
-      name: guacamole
-    patch: |-
-      - op: add
-        path: /metadata/annotations/argocd.argoproj.io~1sync-wave
-        value: "4"
+patches:
+- patch: |-
+    - op: replace
+      path: /spec/template/spec/containers/0/resources/requests/memory
+      value: "512Mi"
+    - op: replace
+      path: /spec/template/spec/containers/0/resources/limits/memory
+      value: "1Gi"
+  target:
+    kind: Deployment
+    name: postgresql
+- patch: |-
+    - op: replace
+      path: /spec/replicas
+      value: 1
+  target:
+    kind: Deployment
+    name: guacamole
+- patch: |-
+    - op: replace
+      path: /spec/replicas
+      value: 1
+  target:
+    kind: Deployment
+    name: guacd
+- patch: |-
+    - op: add
+      path: /metadata/annotations/argocd.argoproj.io~1sync-wave
+      value: "1"
+  target:
+    kind: PersistentVolumeClaim
+- patch: |-
+    - op: add
+      path: /metadata/annotations/argocd.argoproj.io~1sync-wave
+      value: "2"
+  target:
+    kind: Deployment
+    name: postgresql
+- patch: |-
+    - op: add
+      path: /metadata/annotations/argocd.argoproj.io~1sync-wave
+      value: "3"
+  target:
+    kind: Deployment
+    name: guacd
+- patch: |-
+    - op: add
+      path: /metadata/annotations/argocd.argoproj.io~1sync-wave
+      value: "4"
+  target:
+    kind: Deployment
+    name: guacamole
 
 # Imagens (para facilitar updates)
 images:
-  - name: postgres
-    newTag: "15-alpine"
-  - name: guacamole/guacd
-    newTag: "1.5.4"
-  - name: guacamole/guacamole
-    newTag: "1.5.4"
+- name: postgres
+  newTag: 15-alpine
+- name: guacamole/guacd
+  newTag: 1.5.4
+- name: guacamole/guacamole
+  newTag: 1.5.4
 
 # ConfigMap generator para variáveis de ambiente
 configMapGenerator:
-  - name: guacamole-env-config
-    literals:
-      - GUACD_HOSTNAME=guacd
-      - GUACD_PORT=4822
-      - POSTGRES_HOSTNAME=postgresql
-      - POSTGRES_PORT=5432
-      - POSTGRES_DATABASE=guacamole_db
-      
+- literals:
+  - GUACD_HOSTNAME=guacd
+  - GUACD_PORT=4822
+  - POSTGRES_HOSTNAME=postgresql
+  - POSTGRES_PORT=5432
+  - POSTGRES_DATABASE=guacamole_db
+  name: guacamole-env-config
+labels:
+- includeSelectors: true
+  pairs:
+    app.kubernetes.io/instance: guacamole-prod
+    app.kubernetes.io/managed-by: argocd
+    app.kubernetes.io/name: guacamole
+    app.kubernetes.io/part-of: guacamole-stack
+    app.kubernetes.io/version: 1.5.4

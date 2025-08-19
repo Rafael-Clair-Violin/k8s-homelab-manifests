@@ -1,0 +1,90 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: |
+      {"apiVersion":"argoproj.io/v1alpha1","kind":"Application","metadata":{"annotations":{},"finalizers":["resources-finalizer.argocd.argoproj.io"],"labels":{"app.kubernetes.io/instance":"guacamole","app.kubernetes.io/name":"guacamole"},"name":"guacamole","namespace":"argocd"},"spec":{"destination":{"namespace":"guacamole","server":"https://kubernetes.default.svc"},"info":[{"name":"Description","value":"Apache Guacamole deployment with persistent storage"},{"name":"Documentation","value":"https://guacamole.apache.org/doc/gug/"}],"project":"infra","revisionHistoryLimit":3,"source":{"path":"manifests","repoURL":"https://github.com/Rafael-Clair-Violin/k8s-homelab-manifests.git","targetRevision":"HEAD"},"syncPolicy":{"automated":{"allowEmpty":false,"prune":true,"selfHeal":true},"retry":{"backoff":{"duration":"5s","factor":2,"maxDuration":"3m"},"limit":5},"syncOptions":["CreateNamespace=true","PrunePropagationPolicy=foreground","PruneLast=true","ApplyOutOfSyncOnly=true"]}}}
+  creationTimestamp: "2025-08-19T01:27:56Z"
+  finalizers:
+  - resources-finalizer.argocd.argoproj.io
+  generation: 22
+  labels:
+    app.kubernetes.io/instance: guacamole
+    app.kubernetes.io/name: guacamole
+  name: guacamole
+  namespace: argocd
+  resourceVersion: "676451"
+  uid: 66415dc7-4ce2-48bc-a947-a344a3259903
+spec:
+  destination:
+    namespace: guacamole
+    server: https://kubernetes.default.svc
+  info:
+  - name: Description
+    value: Apache Guacamole deployment with persistent storage
+  - name: Documentation
+    value: https://guacamole.apache.org/doc/gug/
+  project: infra
+  revisionHistoryLimit: 3
+  source:
+    path: .
+    repoURL: https://github.com/Rafael-Clair-Violin/k8s-homelab-manifests.git
+    targetRevision: HEAD
+  syncPolicy:
+    automated:
+      allowEmpty: false
+      prune: true
+      selfHeal: true
+    retry:
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 3m
+      limit: 5
+    syncOptions:
+    - CreateNamespace=true
+status:
+  controllerNamespace: argocd
+  health:
+    lastTransitionTime: "2025-08-19T01:27:57Z"
+    status: Healthy
+  history:
+  - deployStartedAt: "2025-08-19T01:57:07Z"
+    deployedAt: "2025-08-19T01:57:07Z"
+    id: 0
+    initiatedBy: {}
+    revision: 7b719c5b6fe4126d4e8f1edc4033ada9adfe5ebf
+    source:
+      path: .
+      repoURL: https://github.com/Rafael-Clair-Violin/k8s-homelab-manifests.git
+      targetRevision: HEAD
+  operationState:
+    finishedAt: "2025-08-19T01:57:07Z"
+    message: successfully synced (no more tasks)
+    operation:
+      initiatedBy: {}
+      retry: {}
+      sync:
+        prune: true
+    phase: Succeeded
+    startedAt: "2025-08-19T01:57:07Z"
+    syncResult:
+      revision: 7b719c5b6fe4126d4e8f1edc4033ada9adfe5ebf
+      source:
+        path: .
+        repoURL: https://github.com/Rafael-Clair-Violin/k8s-homelab-manifests.git
+        targetRevision: HEAD
+  reconciledAt: "2025-08-19T01:57:07Z"
+  resourceHealthSource: appTree
+  sourceType: Directory
+  sync:
+    comparedTo:
+      destination:
+        namespace: guacamole
+        server: https://kubernetes.default.svc
+      source:
+        path: .
+        repoURL: https://github.com/Rafael-Clair-Violin/k8s-homelab-manifests.git
+        targetRevision: HEAD
+    revision: 7b719c5b6fe4126d4e8f1edc4033ada9adfe5ebf
+    status: Synced
