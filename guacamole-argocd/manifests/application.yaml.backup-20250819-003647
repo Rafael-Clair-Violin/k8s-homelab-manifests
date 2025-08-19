@@ -9,11 +9,15 @@ metadata:
   finalizers:
     - resources-finalizer.argocd.argoproj.io
 spec:
-  project: default
+  project: infra
   source:
-    repoURL: https://github.com/Rafael-Clair-Violin/k8s-homelab-manifests.git
-    targetRevision: dev
-    path: manifests  # <<<< PATH CORRETO!
+    repoURL: https://github.com/Rafael-Clair-Violin/k8s-homelab-manifests.git  # ALTERE AQUI
+    targetRevision: HEAD
+    path: manifests
+    # Opcional: usar Kustomize
+    # kustomize:
+    #   commonLabels:
+    #     app.kubernetes.io/managed-by: argocd
   destination:
     server: https://kubernetes.default.svc
     namespace: guacamole
@@ -34,3 +38,8 @@ spec:
         factor: 2
         maxDuration: 3m
   revisionHistoryLimit: 3
+  info:
+    - name: 'Description'
+      value: 'Apache Guacamole deployment with persistent storage'
+    - name: 'Documentation'
+      value: 'https://guacamole.apache.org/doc/gug/'
